@@ -13,7 +13,7 @@ const (
 	VEND_WIMARK = 15400
 )
 
-type WimarkAVPType = uint8
+type WimarkAVPType uint8
 
 const (
 	WimarkAVPTypeClientGroup    WimarkAVPType = 3
@@ -119,10 +119,10 @@ func DecodeWimarkAVPairsStruct(p *radius.Packet) (avpst WimarkAVPs, err error) {
 	}
 
 	for _, avp := range avps {
-		if avp.TypeId == WimarkAVPTypeClientGroup {
+		if avp.TypeId == uint8(WimarkAVPTypeClientGroup) {
 			avpst.ClientGroup = string(avp.Value)
 		}
-		if avp.TypeId == WimarkAVPTypeSessionTimeout {
+		if avp.TypeId == uint8(WimarkAVPTypeSessionTimeout) {
 			avpst.SessionTimeout = int(avp.ValueInt)
 		}
 	}

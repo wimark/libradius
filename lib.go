@@ -2,32 +2,23 @@ package libradius
 
 import (
 	"context"
-	"fmt"
+	// "fmt"
 	"time"
 
 	radius "layeh.com/radius"
 )
 
-type AcctSessionType = string
-type AuthSessionType = string
+type RadiusServer struct {
+	Host string
+	Port int
+}
 
-const (
-	AcctSessionTypeStart   AcctSessionType = "start"
-	AcctSessionTypeInterim AcctSessionType = "interim"
-	AcctSessionTypeStop    AcctSessionType = "stop"
-
-	AuthSessionTypeNone    AuthSessionType = "none"
-	AuthSessionTypeRequest AuthSessionType = "request"
-	AuthSessionTypeAccept  AuthSessionType = "accept"
-	AuthSessionTypeReject  AuthSessionType = "reject"
-)
-
-func ServerRun(host string, port int, secret string,
+func ServerRun(addr string, secret string,
 	f func(w radius.ResponseWriter,
 		r *radius.Request)) {
 
 	server := radius.PacketServer{
-		Addr:         fmt.Sprintf("%s:%d", host, port),
+		Addr:         addr,
 		SecretSource: radius.StaticSecretSource([]byte(secret)),
 		Handler:      radius.HandlerFunc(f),
 	}
@@ -36,16 +27,28 @@ func ServerRun(host string, port int, secret string,
 }
 
 // func for make radius exchange and return rsp packet
-func SendPacket(host string, port int, packet *radius.Packet) (*radius.Packet, error) {
+func SendPacket(addr string, packet *radius.Packet) (*radius.Packet, error) {
 
-	hostport := fmt.Sprintf("%s:%d", host, port)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	rcv, err := radius.Exchange(ctx, packet, hostport)
+	rcv, err := radius.Exchange(ctx, packet, addr)
 	if err != nil {
 		return nil, err
 	}
 
 	return rcv, nil
+}
+
+// func for reliably (almost) send radius packet
+func SendPacketReliably(rs []string, packet *radius.Packet) (*radius.Packet, error) {
+	var err error
+	var rcv *radius.Packet
+	for _, v := range rs {
+		rcv, err = SendPacket(v, packet)
+		if err == nil {
+			return rcv, nil
+		}
+	}
+	return rcv, err
 }

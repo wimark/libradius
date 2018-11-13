@@ -8,6 +8,23 @@ import (
 	radius "layeh.com/radius"
 )
 
+const (
+	RADIUS_START  = "Start"
+	RADIUS_UPDATE = "Interim-Update"
+	RADIUS_STOP   = "Stop"
+)
+
+const (
+	RADIUS_NAS_PORT_TYPE_WIFI = "wireless"
+	RADIUS_NAS_PORT_TYPE_ETH  = "ethernet"
+)
+
+const (
+	RADIUS_CAUSE_STOP  = "Host-Request"
+	RADIUS_CAUSE_SESS  = "Session-Timeout"
+	RADIUS_CAUSE_ADMIN = "Admin-Reset"
+)
+
 type RadiusServer struct {
 	Host string
 	Port int

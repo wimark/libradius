@@ -13,12 +13,18 @@ const (
 	VEND_WIMARK = 15400
 )
 
-type WimarkAVPType uint8
+type AVPType uint8
 
 const (
-	WimarkAVPTypeClientGroup    WimarkAVPType = 3
-	WimarkAVPTypeSessionTimeout WimarkAVPType = 4
-	WimarkAVPTypeAlwaysRedirect WimarkAVPType = 5
+	WimarkAVPTypeClientGroup    AVPType = 3
+	WimarkAVPTypeSessionTimeout AVPType = 4
+	WimarkAVPTypeAlwaysRedirect AVPType = 5
+)
+
+const (
+	CiscoAVPTypeDefault     AVPType = 1
+	CiscoAVPTypeAccountInfo AVPType = 250
+	CiscoAVPTypeCommandCode AVPType = 252
 )
 
 // struct for RADIUS AVP
@@ -37,6 +43,12 @@ func (avp *AVP) String() string {
 type WimarkAVPs struct {
 	ClientGroup    string
 	SessionTimeout int
+}
+
+type CiscoAVPs struct {
+	AccountInfo string
+	CommandCode string
+	AVPs        []string
 }
 
 // Decodes VSA (byte)
@@ -124,6 +136,57 @@ func DecodeWimarkAVPairsStruct(p *radius.Packet) (avpst WimarkAVPs, err error) {
 		}
 		if avp.TypeId == uint8(WimarkAVPTypeSessionTimeout) {
 			avpst.SessionTimeout = int(avp.ValueInt)
+		}
+	}
+	return
+}
+
+// Decodes only Cisco VSA AVPs from radius.Packet
+func DecodeCiscoAVPairs(p *radius.Packet) (avps []*AVP, err error) {
+	var (
+		VendorId uint32
+		TypeId   uint8
+		Value    []byte
+		ValueInt uint32
+	)
+
+	for _, vsa := range p.Attributes[VendorSpecific_Type] {
+		if VendorId, TypeId, Value, ValueInt, err = DecodeAVPairByte(radius.Bytes(vsa)); err != nil {
+			avps = nil
+			return
+		} else {
+			if VendorId == VEND_CISCO {
+				avps = append(avps,
+					&AVP{
+						VendorId: VendorId,
+						TypeId:   TypeId,
+						Value:    Value,
+						ValueInt: ValueInt,
+					},
+				)
+			}
+		}
+	}
+
+	return
+}
+
+func DecodeCiscoAVPairsStruct(p *radius.Packet) (avpst CiscoAVPs, err error) {
+	avps, err := DecodeCiscoAVPairs(p)
+
+	if avps == nil {
+		return
+	}
+
+	for _, avp := range avps {
+		if avp.TypeId == uint8(CiscoAVPTypeAccountInfo) {
+			avpst.AccountInfo = string(avp.Value)
+		}
+		if avp.TypeId == uint8(CiscoAVPTypeCommandCode) {
+			avpst.CommandCode = string(avp.Value)
+		}
+		if avp.TypeId == uint8(CiscoAVPTypeDefault) {
+			avpst.AVPs = append(avpst.AVPs, string(avp.Value))
 		}
 	}
 	return

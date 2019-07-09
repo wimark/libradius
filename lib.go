@@ -57,6 +57,20 @@ func SendPacket(addr string, packet *radius.Packet) (*radius.Packet, error) {
 	return rcv, nil
 }
 
+// func for make radius exchange and return rsp packet
+func SendPacketSrcAddr(addr string, packet *radius.Packet, src_addr string) (*radius.Packet, error) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	rcv, err := radius.Exchange(ctx, packet, addr)
+	if err != nil {
+		return nil, err
+	}
+
+	return rcv, nil
+}
+
 // func for reliably (almost) send radius packet
 func SendPacketReliably(rs []string, packet *radius.Packet) (*radius.Packet, error) {
 	var err error

@@ -11,6 +11,7 @@ import (
 const (
 	VEND_CISCO  = 9
 	VEND_WIMARK = 15400
+	VEND_ALU    = 6527
 )
 
 type AVPType uint8

@@ -28,17 +28,27 @@ const (
 	CiscoAVPTypeCommandCode AVPType = 252
 )
 
+const (
+	CiscoCodeLogon  = byte(0x1)
+	CiscoCodeLogoff = byte(0x2)
+)
+
+const (
+	CiscoSubscriberLogon  = "subscriber:command=account-logon"
+	CiscoSubscriberLogoff = "subscriber:command=account-logoff"
+)
+
 // struct for RADIUS AVP
 type AVP struct {
 	VendorId uint32
 	TypeId   uint8
+	ValueLen uint8
 	Value    []byte
-	ValueInt uint32
 }
 
 func (avp *AVP) String() string {
-	return fmt.Sprintf("Vendor: %d, Type: %d, Value: %s, ValueInt: %d", avp.VendorId,
-		avp.TypeId, string(avp.Value), avp.ValueInt)
+	return fmt.Sprintf("Vendor: %d, Type: %d, Value: %s", avp.VendorId,
+		avp.TypeId, string(avp.Value))
 }
 
 type WimarkAVPs struct {
@@ -47,22 +57,23 @@ type WimarkAVPs struct {
 }
 
 type CiscoAVPs struct {
-	AccountInfo string
-	CommandCode string
-	AVPs        []string
+	AccountInfo      string
+	CommandCodeStr   string
+	CommandCodeBytes []byte
+	AVPs             []string
 }
 
 // Decodes VSA (byte)
-func DecodeAVPairByte(vsa []byte) (vendor_id uint32, type_id uint8, value []byte, value_int uint32, err error) {
+func DecodeAVPairByte(vsa []byte) (vendor_id uint32, type_id uint8, length uint8, value []byte, err error) {
 	if len(vsa) <= 6 {
 		err = fmt.Errorf("Too short VSA: %d bytes", len(vsa))
 		return
 	}
 
-	vendor_id = binary.BigEndian.Uint32([]byte{vsa[0], vsa[1], vsa[2], vsa[3]})
+	vendor_id = binary.BigEndian.Uint32(vsa[0:4])
 	type_id = uint8(vsa[4])
-	value = vsa[5:]
-	value_int = binary.BigEndian.Uint32(value)
+	length = uint8(vsa[5])
+	value = vsa[6:]
 	return
 }
 
@@ -71,12 +82,12 @@ func DecodeAVPairs(p *radius.Packet) (avps []*AVP, err error) {
 	var (
 		VendorId uint32
 		TypeId   uint8
+		ValueLen uint8
 		Value    []byte
-		ValueInt uint32
 	)
 
 	for _, vsa := range p.Attributes[VendorSpecific_Type] {
-		if VendorId, TypeId, Value, ValueInt, err = DecodeAVPairByte(radius.Bytes(vsa)); err != nil {
+		if VendorId, TypeId, ValueLen, Value, err = DecodeAVPairByte(radius.Bytes(vsa)); err != nil {
 			avps = nil
 			return
 		} else {
@@ -84,8 +95,8 @@ func DecodeAVPairs(p *radius.Packet) (avps []*AVP, err error) {
 				&AVP{
 					VendorId: VendorId,
 					TypeId:   TypeId,
+					ValueLen: ValueLen,
 					Value:    Value,
-					ValueInt: ValueInt,
 				},
 			)
 		}
@@ -99,12 +110,12 @@ func DecodeWimarkAVPairs(p *radius.Packet) (avps []*AVP, err error) {
 	var (
 		VendorId uint32
 		TypeId   uint8
+		ValueLen uint8
 		Value    []byte
-		ValueInt uint32
 	)
 
 	for _, vsa := range p.Attributes[VendorSpecific_Type] {
-		if VendorId, TypeId, Value, ValueInt, err = DecodeAVPairByte(radius.Bytes(vsa)); err != nil {
+		if VendorId, TypeId, ValueLen, Value, err = DecodeAVPairByte(radius.Bytes(vsa)); err != nil {
 			avps = nil
 			return
 		} else {
@@ -113,8 +124,8 @@ func DecodeWimarkAVPairs(p *radius.Packet) (avps []*AVP, err error) {
 					&AVP{
 						VendorId: VendorId,
 						TypeId:   TypeId,
+						ValueLen: ValueLen,
 						Value:    Value,
-						ValueInt: ValueInt,
 					},
 				)
 			}
@@ -136,7 +147,7 @@ func DecodeWimarkAVPairsStruct(p *radius.Packet) (avpst WimarkAVPs, err error) {
 			avpst.ClientGroup = string(avp.Value)
 		}
 		if avp.TypeId == uint8(WimarkAVPTypeSessionTimeout) {
-			avpst.SessionTimeout = int(avp.ValueInt)
+			// avpst.SessionTimeout = int(avp.ValueInt)
 		}
 	}
 	return
@@ -147,12 +158,12 @@ func DecodeCiscoAVPairs(p *radius.Packet) (avps []*AVP, err error) {
 	var (
 		VendorId uint32
 		TypeId   uint8
+		ValueLen uint8
 		Value    []byte
-		ValueInt uint32
 	)
 
 	for _, vsa := range p.Attributes[VendorSpecific_Type] {
-		if VendorId, TypeId, Value, ValueInt, err = DecodeAVPairByte(radius.Bytes(vsa)); err != nil {
+		if VendorId, TypeId, ValueLen, Value, err = DecodeAVPairByte(radius.Bytes(vsa)); err != nil {
 			avps = nil
 			return
 		} else {
@@ -161,8 +172,8 @@ func DecodeCiscoAVPairs(p *radius.Packet) (avps []*AVP, err error) {
 					&AVP{
 						VendorId: VendorId,
 						TypeId:   TypeId,
+						ValueLen: ValueLen,
 						Value:    Value,
-						ValueInt: ValueInt,
 					},
 				)
 			}
@@ -184,7 +195,8 @@ func DecodeCiscoAVPairsStruct(p *radius.Packet) (avpst CiscoAVPs, err error) {
 			avpst.AccountInfo = string(avp.Value)
 		}
 		if avp.TypeId == uint8(CiscoAVPTypeCommandCode) {
-			avpst.CommandCode = string(avp.Value)
+			avpst.CommandCodeStr = string(avp.Value)
+			avpst.CommandCodeBytes = avp.Value
 		}
 		if avp.TypeId == uint8(CiscoAVPTypeDefault) {
 			avpst.AVPs = append(avpst.AVPs, string(avp.Value))

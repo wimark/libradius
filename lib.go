@@ -32,7 +32,7 @@ type RadiusServer struct {
 
 func ServerRun(addr string, secret string,
 	f func(w radius.ResponseWriter,
-		r *radius.Request)) {
+		r *radius.Request)) error {
 
 	server := radius.PacketServer{
 		Addr:         addr,
@@ -40,7 +40,7 @@ func ServerRun(addr string, secret string,
 		Handler:      radius.HandlerFunc(f),
 	}
 
-	server.ListenAndServe()
+	return server.ListenAndServe()
 }
 
 // func for make radius exchange and return rsp packet

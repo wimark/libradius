@@ -34,8 +34,11 @@ const (
 )
 
 const (
-	CiscoSubscriberLogon  = "subscriber:command=account-logon"
-	CiscoSubscriberLogoff = "subscriber:command=account-logoff"
+	CiscoSubscriberLogon      = "subscriber:command=account-logon"
+	CiscoSubscriberLogoff     = "subscriber:command=account-logoff"
+	CiscoSubscriberReauth     = "subscriber:command=reauthenticate"
+	CiscoSubscriberReauthType = "subsriber:reathenticate-type=last"
+	CiscoAuditSessionID       = "audit-session-id="
 )
 
 // struct for RADIUS AVP
@@ -60,6 +63,7 @@ type CiscoAVPs struct {
 	AccountInfo      string
 	CommandCodeStr   string
 	CommandCodeBytes []byte
+	AuditSessionID   string
 	AVPs             []string
 }
 

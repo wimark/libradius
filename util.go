@@ -12,13 +12,14 @@ const (
 	VEND_CISCO  = 9
 	VEND_WIMARK = 15400
 	VEND_ALU    = 6527
+	VEND_RDP    = 250 
 )
 
 type AVPType uint8
 
 const (
-	WimarkAVPTypeClientGroup    AVPType = 3
-	WimarkAVPTypeSessionTimeout AVPType = 4
+	WimarkAVPTypeClientstr    AVPType = 3
+	WimarkAVPTypeSessionint AVPType = 4
 	WimarkAVPTypeAlwaysRedirect AVPType = 5
 )
 
@@ -26,6 +27,10 @@ const (
 	CiscoAVPTypeDefault     AVPType = 1
 	CiscoAVPTypeAccountInfo AVPType = 250
 	CiscoAVPTypeCommandCode AVPType = 252
+)
+
+const (
+	RdpServiceName AVPType = 250
 )
 
 const (
@@ -55,8 +60,8 @@ func (avp *AVP) String() string {
 }
 
 type WimarkAVPs struct {
-	ClientGroup    string
-	SessionTimeout int
+	Clientstr    string
+	Sessionint int
 }
 
 type CiscoAVPs struct {
@@ -147,11 +152,11 @@ func DecodeWimarkAVPairsStruct(p *radius.Packet) (avpst WimarkAVPs, err error) {
 	}
 
 	for _, avp := range avps {
-		if avp.TypeId == uint8(WimarkAVPTypeClientGroup) {
-			avpst.ClientGroup = string(avp.Value)
+		if avp.TypeId == uint8(WimarkAVPTypeClientstr) {
+			avpst.Clientstr = string(avp.Value)
 		}
-		if avp.TypeId == uint8(WimarkAVPTypeSessionTimeout) {
-			// avpst.SessionTimeout = int(avp.ValueInt)
+		if avp.TypeId == uint8(WimarkAVPTypeSessionint) {
+			// avpst.Sessionint = int(avp.ValueInt)
 		}
 	}
 	return
@@ -208,3 +213,25 @@ func DecodeCiscoAVPairsStruct(p *radius.Packet) (avpst CiscoAVPs, err error) {
 	}
 	return
 }
+
+func AddVSAString(p *radius.Packet, vendor uint32, attribute uint8, value string) {
+	rbytes, _ := radius.NewBytes([]byte(value))
+	attr := make(radius.Attribute, 2+len(rbytes))
+	attr[0] = byte(attribute)
+	attr[1] = byte(len(attr))
+	copy(attr[2:], rbytes)
+	vsa, _ := radius.NewVendorSpecific(vendor, attr) 
+	p.Add(VendorSpecific_Type, vsa)
+}
+
+func AddVSAInt(p *radius.Packet, vendor uint32, attribute uint8, value int) {
+	rbytes := radius.NewInteger(uint32(value))
+	attr := make(radius.Attribute, 2+len(rbytes))
+	attr[0] = byte(attribute)
+	attr[1] = byte(len(attr))
+	copy(attr[2:], rbytes)
+	vsa, _ := radius.NewVendorSpecific(vendor, attr) 
+	p.Add(VendorSpecific_Type, vsa)
+}
+
+

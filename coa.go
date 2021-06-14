@@ -33,6 +33,8 @@ func SendCoA(host string, port int, secret string, request CoaRequest) error {
 	FramedIPAddress_Add(packet, net.ParseIP(request.FramedIPAddress))
 	AcctSessionID_AddString(packet, request.AcctSessionID)
 	EventTimestamp_Set(packet, time.Now())
+	IdleTimeout_Add(packet, IdleTimeout(request.IdleTimeout))
+	SessionTimeout_Add(packet, SessionTimeout(request.SessionTimeout))
 
 	for _, v:= range request.VSA {
 		if len(v.ValueString) > 0 {

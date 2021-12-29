@@ -1,4 +1,4 @@
-module bitbucket.org/wimarksystems/libradius
+module github.com/wimark/libradius
 
 go 1.15
 

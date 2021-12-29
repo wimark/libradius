@@ -1,9 +1,9 @@
-package libradius 
+package libradius
 
 import (
-	"time"
 	"fmt"
 	"net"
+	"time"
 
 	radius "layeh.com/radius"
 	. "layeh.com/radius/rfc2865"
@@ -12,20 +12,21 @@ import (
 )
 
 type CoaRequest struct {
-	FramedIPAddress string 
-	AcctSessionID string 
-	SessionTimeout int 
-	IdleTimeout int 
-	VSA []VSAEntity 
+	FramedIPAddress string
+	AcctSessionID   string
+	SessionTimeout  int
+	IdleTimeout     int
+	VSA             []VSAEntity
 }
 
 type VSAEntity struct {
-	Vendor uint32
-	Attr byte 
-	ValueString string 
-	ValueInt int 
+	Vendor      uint32
+	Attr        byte
+	ValueString string
+	ValueInt    int
 }
 
+// SendCoA function for send ChangeOfAuthorisation to host:port RADIUS server
 func SendCoA(host string, port int, secret string, request CoaRequest) error {
 	packet := radius.New(radius.CodeCoARequest, []byte(""))
 	packet.Secret = []byte(secret)
@@ -36,7 +37,7 @@ func SendCoA(host string, port int, secret string, request CoaRequest) error {
 	IdleTimeout_Add(packet, IdleTimeout(request.IdleTimeout))
 	SessionTimeout_Add(packet, SessionTimeout(request.SessionTimeout))
 
-	for _, v:= range request.VSA {
+	for _, v := range request.VSA {
 		if len(v.ValueString) > 0 {
 			AddVSAString(packet, v.Vendor, v.Attr, v.ValueString)
 		} else {
@@ -44,14 +45,13 @@ func SendCoA(host string, port int, secret string, request CoaRequest) error {
 		}
 	}
 
-	addr := fmt.Sprintf("%s:%d", host, port)
-	rcv, err := SendPacket(addr, packet)
+	rcv, err := SendPacket(fmt.Sprintf("%s:%d", host, port), packet)
 	if err != nil {
-		return err 
+		return err
 	}
 
 	if rcv != nil && rcv.Code != radius.CodeCoAACK {
-		return fmt.Errorf("Got not CodeCoAck: %d", rcv.Code)
+		return fmt.Errorf("response is not CodeCoAck: %d", rcv.Code)
 	}
 
 	return nil

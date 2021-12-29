@@ -2,7 +2,6 @@ package libradius
 
 import (
 	"context"
-	// "fmt"
 	"time"
 
 	radius "layeh.com/radius"
@@ -30,6 +29,7 @@ type RadiusServer struct {
 	Port int
 }
 
+// ServerRun function for running RADIUS server
 func ServerRun(addr string, secret string,
 	f func(w radius.ResponseWriter,
 		r *radius.Request)) error {
@@ -43,7 +43,7 @@ func ServerRun(addr string, secret string,
 	return server.ListenAndServe()
 }
 
-// func for make radius exchange and return rsp packet
+// SendPacket func for make radius exchange and return rsp packet
 func SendPacket(addr string, packet *radius.Packet) (*radius.Packet, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -57,7 +57,7 @@ func SendPacket(addr string, packet *radius.Packet) (*radius.Packet, error) {
 	return rcv, nil
 }
 
-// func for make radius exchange and return rsp packet
+// SendPacketSrcAddr func for make radius exchange and return rsp packet
 func SendPacketSrcAddr(addr string, packet *radius.Packet, src_addr string) (*radius.Packet, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -71,7 +71,7 @@ func SendPacketSrcAddr(addr string, packet *radius.Packet, src_addr string) (*ra
 	return rcv, nil
 }
 
-// func for reliably (almost) send radius packet
+// SendPacketReliably func for reliably (almost) send radius packet
 func SendPacketReliably(rs []string, packet *radius.Packet) (*radius.Packet, error) {
 	var err error
 	var rcv *radius.Packet

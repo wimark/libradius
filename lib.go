@@ -43,6 +43,22 @@ func ServerRun(addr string, secret string,
 	return server.ListenAndServe()
 }
 
+// ServerRunSecrets function for run server with external SecretSource
+func ServerRunWithSecretsAsync(addr string, s radius.SecretSource,
+	f func(w radius.ResponseWriter,
+		r *radius.Request)) (*radius.PacketServer, error) {
+
+	server := radius.PacketServer{
+		Addr:         addr,
+		SecretSource: s,
+		Handler:      radius.HandlerFunc(f),
+	}
+
+	go server.ListenAndServe()
+
+	return &server, nil
+}
+
 // SendPacket func for make radius exchange and return rsp packet
 func SendPacket(addr string, packet *radius.Packet) (*radius.Packet, error) {
 

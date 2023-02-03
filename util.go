@@ -4,29 +4,35 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	radius "layeh.com/radius"
-	. "layeh.com/radius/rfc2865"
-)
-
-const (
-	VEND_CISCO  = 9
-	VEND_WIMARK = 15400
-	VEND_ALU    = 6527
-	VEND_RDP    = 250 
+	"layeh.com/radius"
+	"layeh.com/radius/rfc2865"
 )
 
 type AVPType uint8
 
 const (
-	WimarkAVPTypeClientstr    AVPType = 3
-	WimarkAVPTypeSessionint AVPType = 4
+	VendorCisco  uint32 = 9
+	VendorWimark uint32 = 15400
+	VendorAlu    uint32 = 6527
+	VendorRdp    uint32 = 250
+)
+
+const (
+	WimarkAVPTypeClientStr      AVPType = 3
+	WimarkAVPTypeSessionInt     AVPType = 4
 	WimarkAVPTypeAlwaysRedirect AVPType = 5
+
+	WimarkAVPTypeExternalAuthUserRole     AVPType = 6
+	WimarkAVPTypeExternalAuthUserLocation AVPType = 7
 )
 
 const (
 	CiscoAVPTypeDefault     AVPType = 1
 	CiscoAVPTypeAccountInfo AVPType = 250
 	CiscoAVPTypeCommandCode AVPType = 252
+
+	CiscoAVPTypeExternalAuthUserRole     AVPType = 8
+	CiscoAVPTypeExternalAuthUserLocation AVPType = 9
 )
 
 const (
@@ -34,19 +40,18 @@ const (
 )
 
 const (
-	CiscoCodeLogon  = byte(0x1)
-	CiscoCodeLogoff = byte(0x2)
+	CiscoCodeLogon  byte = 0x1
+	CiscoCodeLogoff byte = 0x2
 )
 
 const (
-	CiscoSubscriberLogon      = "subscriber:command=account-logon"
-	CiscoSubscriberLogoff     = "subscriber:command=account-logoff"
-	CiscoSubscriberReauth     = "subscriber:command=reauthenticate"
-	CiscoSubscriberReauthType = "subsriber:reathenticate-type=last"
-	CiscoAuditSessionID       = "audit-session-id="
+	CiscoSubscriberLogon      string = "subscriber:command=account-logon"
+	CiscoSubscriberLogoff     string = "subscriber:command=account-logoff"
+	CiscoSubscriberReauth     string = "subscriber:command=reauthenticate"
+	CiscoSubscriberReauthType string = "subscriber:reathenticate-type=last"
+	CiscoAuditSessionID       string = "audit-session-id="
 )
 
-// struct for RADIUS AVP
 type AVP struct {
 	VendorId uint32
 	TypeId   uint8
@@ -54,184 +59,115 @@ type AVP struct {
 	Value    []byte
 }
 
-func (avp *AVP) String() string {
-	return fmt.Sprintf("Vendor: %d, Type: %d, Value: %s", avp.VendorId,
-		avp.TypeId, string(avp.Value))
+func (a *AVP) String() string {
+	return fmt.Sprintf("Vendor: %d, Type: %d, Value: %s", a.VendorId, a.TypeId, string(a.Value))
 }
 
-type WimarkAVPs struct {
-	Clientstr    string
-	Sessionint int
+type WimarkAVPairs struct {
+	ClientStr  string
+	SessionInt int
 }
 
-type CiscoAVPs struct {
+type CiscoAVPairs struct {
 	AccountInfo      string
 	CommandCodeStr   string
-	CommandCodeBytes []byte
 	AuditSessionID   string
-	AVPs             []string
+	CommandCodeBytes []byte
+	AVPList          []string
 }
 
-// Decodes VSA (byte)
-func DecodeAVPairByte(vsa []byte) (vendor_id uint32, type_id uint8, length uint8, value []byte, err error) {
+func DecodeAVPair(vsa []byte) (*AVP, error) {
 	if len(vsa) <= 6 {
-		err = fmt.Errorf("Too short VSA: %d bytes", len(vsa))
-		return
+		return nil, fmt.Errorf("too short VSA: %d bytes", len(vsa))
 	}
 
-	vendor_id = binary.BigEndian.Uint32(vsa[0:4])
-	type_id = uint8(vsa[4])
-	length = uint8(vsa[5])
-	value = vsa[6:]
-	return
+	return &AVP{
+		VendorId: binary.BigEndian.Uint32(vsa[0:4]),
+		TypeId:   vsa[4],
+		ValueLen: vsa[5],
+		Value:    vsa[6:],
+	}, nil
 }
 
-// Decodes All AVPs from radius.Packet
-func DecodeAVPairs(p *radius.Packet) (avps []*AVP, err error) {
-	var (
-		VendorId uint32
-		TypeId   uint8
-		ValueLen uint8
-		Value    []byte
-	)
+func DecodeAVPairs(p *radius.Packet, vendorID uint32) ([]*AVP, error) {
+	var AVPItem *AVP
+	var AVPList []*AVP
+	var err error
 
-	for _, vsa := range p.Attributes[VendorSpecific_Type] {
-		if VendorId, TypeId, ValueLen, Value, err = DecodeAVPairByte(radius.Bytes(vsa)); err != nil {
-			avps = nil
-			return
-		} else {
-			avps = append(avps,
-				&AVP{
-					VendorId: VendorId,
-					TypeId:   TypeId,
-					ValueLen: ValueLen,
-					Value:    Value,
-				},
-			)
+	for _, vsa := range p.Attributes[rfc2865.VendorSpecific_Type] {
+		if AVPItem, err = DecodeAVPair(radius.Bytes(vsa)); err != nil {
+			return nil, err
 		}
-	}
 
-	return
-}
-
-// Decodes only Wimark VSA AVPs from radius.Packet
-func DecodeWimarkAVPairs(p *radius.Packet) (avps []*AVP, err error) {
-	var (
-		VendorId uint32
-		TypeId   uint8
-		ValueLen uint8
-		Value    []byte
-	)
-
-	for _, vsa := range p.Attributes[VendorSpecific_Type] {
-		if VendorId, TypeId, ValueLen, Value, err = DecodeAVPairByte(radius.Bytes(vsa)); err != nil {
-			avps = nil
-			return
-		} else {
-			if VendorId == VEND_WIMARK {
-				avps = append(avps,
-					&AVP{
-						VendorId: VendorId,
-						TypeId:   TypeId,
-						ValueLen: ValueLen,
-						Value:    Value,
-					},
-				)
+		if vendorID != 0 {
+			if AVPItem.VendorId == vendorID {
+				AVPList = append(AVPList, AVPItem)
 			}
-		}
-	}
-
-	return
-}
-
-func DecodeWimarkAVPairsStruct(p *radius.Packet) (avpst WimarkAVPs, err error) {
-	avps, err := DecodeWimarkAVPairs(p)
-
-	if avps == nil {
-		return
-	}
-
-	for _, avp := range avps {
-		if avp.TypeId == uint8(WimarkAVPTypeClientstr) {
-			avpst.Clientstr = string(avp.Value)
-		}
-		if avp.TypeId == uint8(WimarkAVPTypeSessionint) {
-			// avpst.Sessionint = int(avp.ValueInt)
-		}
-	}
-	return
-}
-
-// Decodes only Cisco VSA AVPs from radius.Packet
-func DecodeCiscoAVPairs(p *radius.Packet) (avps []*AVP, err error) {
-	var (
-		VendorId uint32
-		TypeId   uint8
-		ValueLen uint8
-		Value    []byte
-	)
-
-	for _, vsa := range p.Attributes[VendorSpecific_Type] {
-		if VendorId, TypeId, ValueLen, Value, err = DecodeAVPairByte(radius.Bytes(vsa)); err != nil {
-			avps = nil
-			return
 		} else {
-			if VendorId == VEND_CISCO {
-				avps = append(avps,
-					&AVP{
-						VendorId: VendorId,
-						TypeId:   TypeId,
-						ValueLen: ValueLen,
-						Value:    Value,
-					},
-				)
-			}
+			AVPList = append(AVPList, AVPItem)
 		}
 	}
 
-	return
+	return AVPList, nil
 }
 
-func DecodeCiscoAVPairsStruct(p *radius.Packet) (avpst CiscoAVPs, err error) {
-	avps, err := DecodeCiscoAVPairs(p)
+func DecodeWimarkAVPairsStruct(p *radius.Packet) (*WimarkAVPairs, error) {
+	var WimarkAVPairsList *WimarkAVPairs
 
-	if avps == nil {
-		return
+	AVPList, err := DecodeAVPairs(p, VendorWimark)
+	if err != nil {
+		return nil, err
 	}
 
-	for _, avp := range avps {
-		if avp.TypeId == uint8(CiscoAVPTypeAccountInfo) {
-			avpst.AccountInfo = string(avp.Value)
-		}
-		if avp.TypeId == uint8(CiscoAVPTypeCommandCode) {
-			avpst.CommandCodeStr = string(avp.Value)
-			avpst.CommandCodeBytes = avp.Value
-		}
-		if avp.TypeId == uint8(CiscoAVPTypeDefault) {
-			avpst.AVPs = append(avpst.AVPs, string(avp.Value))
+	for _, AVPItem := range AVPList {
+		if AVPItem.TypeId == uint8(WimarkAVPTypeClientStr) {
+			WimarkAVPairsList.ClientStr = string(AVPItem.Value)
 		}
 	}
-	return
+
+	return WimarkAVPairsList, nil
+}
+
+func DecodeCiscoAVPairsStruct(p *radius.Packet) (*CiscoAVPairs, error) {
+	var CiscoAVPairsList *CiscoAVPairs
+
+	AVPList, err := DecodeAVPairs(p, VendorCisco)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, AVPItem := range AVPList {
+		if AVPItem.TypeId == uint8(CiscoAVPTypeAccountInfo) {
+			CiscoAVPairsList.AccountInfo = string(AVPItem.Value)
+		}
+		if AVPItem.TypeId == uint8(CiscoAVPTypeCommandCode) {
+			CiscoAVPairsList.CommandCodeStr = string(AVPItem.Value)
+			CiscoAVPairsList.CommandCodeBytes = AVPItem.Value
+		}
+		if AVPItem.TypeId == uint8(CiscoAVPTypeDefault) {
+			CiscoAVPairsList.AVPList = append(CiscoAVPairsList.AVPList, string(AVPItem.Value))
+		}
+	}
+
+	return CiscoAVPairsList, nil
 }
 
 func AddVSAString(p *radius.Packet, vendor uint32, attribute uint8, value string) {
-	rbytes, _ := radius.NewBytes([]byte(value))
-	attr := make(radius.Attribute, 2+len(rbytes))
-	attr[0] = byte(attribute)
+	bytes, _ := radius.NewBytes([]byte(value))
+	attr := make(radius.Attribute, 2+len(bytes))
+	attr[0] = attribute
 	attr[1] = byte(len(attr))
-	copy(attr[2:], rbytes)
-	vsa, _ := radius.NewVendorSpecific(vendor, attr) 
-	p.Add(VendorSpecific_Type, vsa)
+	copy(attr[2:], bytes)
+	vsa, _ := radius.NewVendorSpecific(vendor, attr)
+	p.Add(rfc2865.VendorSpecific_Type, vsa)
 }
 
 func AddVSAInt(p *radius.Packet, vendor uint32, attribute uint8, value int) {
-	rbytes := radius.NewInteger(uint32(value))
-	attr := make(radius.Attribute, 2+len(rbytes))
-	attr[0] = byte(attribute)
+	bytes := radius.NewInteger(uint32(value))
+	attr := make(radius.Attribute, 2+len(bytes))
+	attr[0] = attribute
 	attr[1] = byte(len(attr))
-	copy(attr[2:], rbytes)
-	vsa, _ := radius.NewVendorSpecific(vendor, attr) 
-	p.Add(VendorSpecific_Type, vsa)
+	copy(attr[2:], bytes)
+	vsa, _ := radius.NewVendorSpecific(vendor, attr)
+	p.Add(rfc2865.VendorSpecific_Type, vsa)
 }
-
-

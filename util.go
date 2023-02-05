@@ -12,15 +12,18 @@ const (
 	VEND_CISCO  = 9
 	VEND_WIMARK = 15400
 	VEND_ALU    = 6527
-	VEND_RDP    = 250 
+	VEND_RDP    = 250
 )
 
 type AVPType uint8
 
 const (
-	WimarkAVPTypeClientstr    AVPType = 3
-	WimarkAVPTypeSessionint AVPType = 4
+	WimarkAVPTypeClientstr      AVPType = 3
+	WimarkAVPTypeSessionint     AVPType = 4
 	WimarkAVPTypeAlwaysRedirect AVPType = 5
+
+	WimarkAVPTypeExternalAuthUserRole     AVPType = 6
+	WimarkAVPTypeExternalAuthUserLocation AVPType = 7
 )
 
 const (
@@ -54,13 +57,18 @@ type AVP struct {
 	Value    []byte
 }
 
+type ExternalAuthAVPairs struct {
+	UserRole string
+	Location string
+}
+
 func (avp *AVP) String() string {
 	return fmt.Sprintf("Vendor: %d, Type: %d, Value: %s", avp.VendorId,
 		avp.TypeId, string(avp.Value))
 }
 
 type WimarkAVPs struct {
-	Clientstr    string
+	Clientstr  string
 	Sessionint int
 }
 
@@ -220,7 +228,7 @@ func AddVSAString(p *radius.Packet, vendor uint32, attribute uint8, value string
 	attr[0] = byte(attribute)
 	attr[1] = byte(len(attr))
 	copy(attr[2:], rbytes)
-	vsa, _ := radius.NewVendorSpecific(vendor, attr) 
+	vsa, _ := radius.NewVendorSpecific(vendor, attr)
 	p.Add(VendorSpecific_Type, vsa)
 }
 
@@ -230,8 +238,61 @@ func AddVSAInt(p *radius.Packet, vendor uint32, attribute uint8, value int) {
 	attr[0] = byte(attribute)
 	attr[1] = byte(len(attr))
 	copy(attr[2:], rbytes)
-	vsa, _ := radius.NewVendorSpecific(vendor, attr) 
+	vsa, _ := radius.NewVendorSpecific(vendor, attr)
 	p.Add(VendorSpecific_Type, vsa)
 }
 
+func DecodeAVPair(vsa []byte) (*AVP, error) {
+	if len(vsa) <= 6 {
+		return nil, fmt.Errorf("too short VSA: %d bytes", len(vsa))
+	}
 
+	return &AVP{
+		VendorId: binary.BigEndian.Uint32(vsa[0:4]),
+		TypeId:   vsa[4],
+		ValueLen: vsa[5],
+		Value:    vsa[6:],
+	}, nil
+}
+
+func DecodeAllAVPairs(p *radius.Packet, vendorID uint32) ([]*AVP, error) {
+	var AVPItem *AVP
+	var AVPList []*AVP
+	var err error
+
+	for _, vsa := range p.Attributes[VendorSpecific_Type] {
+		if AVPItem, err = DecodeAVPair(radius.Bytes(vsa)); err != nil {
+			return nil, err
+		}
+
+		if vendorID != 0 {
+			if AVPItem.VendorId == vendorID {
+				AVPList = append(AVPList, AVPItem)
+			}
+		} else {
+			AVPList = append(AVPList, AVPItem)
+		}
+	}
+
+	return AVPList, nil
+}
+
+func DecodeWimarkExternalAuthAVPairsStruct(p *radius.Packet) (*ExternalAuthAVPairs, error) {
+	var WimarkAVPairsList *ExternalAuthAVPairs
+
+	AVPList, err := DecodeAllAVPairs(p, VEND_WIMARK)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, AVPItem := range AVPList {
+		if AVPItem.TypeId == uint8(WimarkAVPTypeExternalAuthUserRole) {
+			WimarkAVPairsList.UserRole = string(AVPItem.Value)
+		}
+		if AVPItem.TypeId == uint8(WimarkAVPTypeExternalAuthUserLocation) {
+			WimarkAVPairsList.Location = string(AVPItem.Value)
+		}
+	}
+
+	return WimarkAVPairsList, nil
+}

@@ -118,7 +118,7 @@ func DecodeWimarkAVPairsStruct(p *radius.Packet) (*WimarkAVPs, error) {
 
 func DecodeCiscoVPairsStruct(p *radius.Packet) (*CiscoAVPs, error) {
 	var CiscoAVPStruct *CiscoAVPs
-	AVPList, err := DecodeAVPairsVSAByVendor(p, VendorWimark)
+	AVPList, err := DecodeAVPairsVSAByVendor(p, VendorCisco)
 
 	if err != nil {
 		return nil, err

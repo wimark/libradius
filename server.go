@@ -12,6 +12,14 @@ type RadiusServerConfig struct {
 	Secret string
 }
 
+func NewRadiusServerConfig(host, port, secret string) *RadiusServerConfig {
+	return &RadiusServerConfig{
+		Host:   host,
+		Port:   port,
+		Secret: secret,
+	}
+}
+
 func (c *RadiusServerConfig) GetAddr() string {
 	return fmt.Sprintf("%s:%s", c.Host, c.Port)
 }

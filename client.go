@@ -12,6 +12,13 @@ type RadiusClientConfig struct {
 	Retry           time.Duration
 }
 
+func NewRadiusClientConfig(maxPacketErrors int, retry time.Duration) *RadiusClientConfig {
+	return &RadiusClientConfig{
+		MaxPacketErrors: maxPacketErrors,
+		Retry:           retry,
+	}
+}
+
 func NewRadiusClient(cfg *RadiusClientConfig) *radius.Client {
 	return &radius.Client{
 		Retry:           cfg.Retry,

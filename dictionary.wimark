@@ -1,10 +1,9 @@
-# Wimark vendor dictionary for use with FreeRADIUS 
-# or another AAA servers
-VENDOR		Wimark			15400
+VENDOR		Wimark			52400
 
 BEGIN-VENDOR	Wimark
 
 ATTRIBUTE	Wimark-Client-Group				3	string
 ATTRIBUTE	Wimark-Session-Timeout			4	integer
+ATTRIBUTE	Wimark-Always-Redirect			5	integer
 
 END-VENDOR	Wimark

@@ -5,10 +5,10 @@ import (
 	"net"
 	"time"
 
-	radius "layeh.com/radius"
-	. "layeh.com/radius/rfc2865"
-	. "layeh.com/radius/rfc2866"
-	. "layeh.com/radius/rfc2869"
+	"layeh.com/radius"
+	"layeh.com/radius/rfc2865"
+	"layeh.com/radius/rfc2866"
+	"layeh.com/radius/rfc2869"
 )
 
 type CoaRequest struct {
@@ -16,7 +16,7 @@ type CoaRequest struct {
 	AcctSessionID   string
 	SessionTimeout  int
 	IdleTimeout     int
-	VSA             []VSAEntity
+	VSAList         []VSAEntity
 }
 
 type VSAEntity struct {
@@ -26,32 +26,30 @@ type VSAEntity struct {
 	ValueInt    int
 }
 
-// SendCoA function for send ChangeOfAuthorisation to host:port RADIUS server
-func SendCoA(host string, port int, secret string, request CoaRequest) error {
+func SendCoA(addr, secret string, request CoaRequest) error {
 	packet := radius.New(radius.CodeCoARequest, []byte(""))
 	packet.Secret = []byte(secret)
+	rfc2865.FramedIPAddress_Add(packet, net.ParseIP(request.FramedIPAddress))
+	rfc2866.AcctSessionID_AddString(packet, request.AcctSessionID)
+	rfc2869.EventTimestamp_Add(packet, time.Now())
+	rfc2865.IdleTimeout_Add(packet, rfc2865.IdleTimeout(request.IdleTimeout))
+	rfc2865.SessionTimeout_Add(packet, rfc2865.SessionTimeout(request.SessionTimeout))
 
-	FramedIPAddress_Add(packet, net.ParseIP(request.FramedIPAddress))
-	AcctSessionID_AddString(packet, request.AcctSessionID)
-	EventTimestamp_Set(packet, time.Now())
-	IdleTimeout_Add(packet, IdleTimeout(request.IdleTimeout))
-	SessionTimeout_Add(packet, SessionTimeout(request.SessionTimeout))
-
-	for _, v := range request.VSA {
-		if len(v.ValueString) > 0 {
-			AddVSAString(packet, v.Vendor, v.Attr, v.ValueString)
+	for _, vsa := range request.VSAList {
+		if len(vsa.ValueString) > 0 {
+			AddVSAString(packet, vsa.Vendor, vsa.Attr, vsa.ValueString)
 		} else {
-			AddVSAInt(packet, v.Vendor, v.Attr, v.ValueInt)
+			AddVSAInt(packet, vsa.Vendor, vsa.Attr, vsa.ValueInt)
 		}
 	}
 
-	rcv, err := SendPacket(fmt.Sprintf("%s:%d", host, port), packet)
+	response, err := SendPacket(addr, packet)
 	if err != nil {
 		return err
 	}
 
-	if rcv != nil && rcv.Code != radius.CodeCoAACK {
-		return fmt.Errorf("response is not CodeCoAck: %d", rcv.Code)
+	if response != nil && response.Code != radius.CodeCoAACK {
+		return fmt.Errorf("response is not CodeCoAACK: %d", response.Code)
 	}
 
 	return nil

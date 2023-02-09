@@ -1,5 +1,5 @@
 module github.com/wimark/libradius
 
-go 1.17
+go 1.18
 
-require layeh.com/radius v0.0.0-20200319120610-4f9edad03f58
+require layeh.com/radius v0.0.0-20221205141417-e7fbddd11d68 // indirect

@@ -8,8 +8,6 @@ import (
 	"layeh.com/radius/rfc2865"
 )
 
-type AVPType uint8
-
 type AVP struct {
 	VendorId uint32
 	TypeId   uint8

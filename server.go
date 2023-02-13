@@ -7,9 +7,9 @@ import (
 )
 
 type RadiusServerConfig struct {
-	Host   string
-	Port   string
-	Secret string
+	Host   string `json:"host"`
+	Port   string `json:"port"`
+	Secret string `json:"secret"`
 }
 
 func NewRadiusServerConfig(host, port, secret string) *RadiusServerConfig {

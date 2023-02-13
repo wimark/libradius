@@ -2,6 +2,8 @@ package libradius
 
 import "time"
 
+type AVPType uint8
+
 const (
 	VendorCisco  uint32 = 9
 	VendorWimark uint32 = 52400
@@ -31,9 +33,11 @@ const (
 )
 
 const (
-	WimarkAVPTypeClientStr      AVPType = 3
-	WimarkAVPTypeSessionInt     AVPType = 4
-	WimarkAVPTypeAlwaysRedirect AVPType = 5
+	WimarkAVPTypeClientStr                   AVPType = 3
+	WimarkAVPTypeSessionInt                  AVPType = 4
+	WimarkAVPTypeAlwaysRedirect              AVPType = 5
+	WimarkRadiusExternalAuthUserRoleType     AVPType = 6
+	WimarkRadiusExternalAuthUserLocationType AVPType = 7
 )
 
 const (

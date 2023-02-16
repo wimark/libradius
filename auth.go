@@ -12,24 +12,6 @@ type RadiusUserData struct {
 	UserLocation string
 }
 
-type RadiusAuth struct {
-	IsActive      bool                 `json:"is_active"`
-	Protocol      string               `json:"protocol"`
-	RadiusServers []RadiusServerConfig `json:"radius_servers"`
-}
-
-func (a *RadiusAuth) Validate() error {
-	if a.Protocol != "PAP" {
-		return fmt.Errorf("incorrect protocol for external radius auth")
-	}
-
-	if len(a.RadiusServers) <= 0 {
-		return fmt.Errorf("incorrect length of radius servers list")
-	}
-
-	return nil
-}
-
 func LookupExternalRadiusAuthAttrs(p *radius.Packet) (*RadiusUserData, error) {
 	var data RadiusUserData
 	if len(p.Attributes) == 0 {

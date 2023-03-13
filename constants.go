@@ -38,6 +38,7 @@ const (
 	WimarkAVPTypeAlwaysRedirect              AVPType = 5
 	WimarkRadiusExternalAuthUserRoleType     AVPType = 6
 	WimarkRadiusExternalAuthUserLocationType AVPType = 7
+	WimarkIdentifierWLANType                 AVPType = 8
 )
 
 const (

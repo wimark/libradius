@@ -348,3 +348,97 @@ func WimarkAlwaysRedirect_Set(p *radius.Packet, value WimarkAlwaysRedirect) (err
 func WimarkAlwaysRedirect_Del(p *radius.Packet) {
 	_Wimark_DelVendor(p, 5)
 }
+
+func WimarkWLANID_Add(p *radius.Packet, value []byte) (err error) {
+	var a radius.Attribute
+	a, err = radius.NewBytes(value)
+	if err != nil {
+		return
+	}
+	return _Wimark_AddVendor(p, 8, a)
+}
+
+func WimarkWLANID_AddString(p *radius.Packet, value string) (err error) {
+	var a radius.Attribute
+	a, err = radius.NewString(value)
+	if err != nil {
+		return
+	}
+	return _Wimark_AddVendor(p, 8, a)
+}
+
+func WimarkWLANID_Get(p *radius.Packet) (value []byte) {
+	value, _ = WimarkWLANID_Lookup(p)
+	return
+}
+
+func WimarkWLANID_GetString(p *radius.Packet) (value string) {
+	value, _ = WimarkWLANID_LookupString(p)
+	return
+}
+
+func WimarkWLANID_Gets(p *radius.Packet) (values [][]byte, err error) {
+	var i []byte
+	for _, attr := range _Wimark_GetsVendor(p, 8) {
+		i = radius.Bytes(attr)
+		if err != nil {
+			return
+		}
+		values = append(values, i)
+	}
+	return
+}
+
+func WimarkWLANID_GetStrings(p *radius.Packet) (values []string, err error) {
+	var i string
+	for _, attr := range _Wimark_GetsVendor(p, 8) {
+		i = radius.String(attr)
+		if err != nil {
+			return
+		}
+		values = append(values, i)
+	}
+	return
+}
+
+func WimarkWLANID_Lookup(p *radius.Packet) (value []byte, err error) {
+	a, ok := _Wimark_LookupVendor(p, 8)
+	if !ok {
+		err = radius.ErrNoAttribute
+		return
+	}
+	value = radius.Bytes(a)
+	return
+}
+
+func WimarkWLANID_LookupString(p *radius.Packet) (value string, err error) {
+	a, ok := _Wimark_LookupVendor(p, 8)
+	if !ok {
+		err = radius.ErrNoAttribute
+		return
+	}
+	value = radius.String(a)
+	return
+}
+
+func WimarkWLANID_Set(p *radius.Packet, value []byte) (err error) {
+	var a radius.Attribute
+	a, err = radius.NewBytes(value)
+	if err != nil {
+		return
+	}
+	return _Wimark_SetVendor(p, 8, a)
+}
+
+func WimarkWLANID_SetString(p *radius.Packet, value string) (err error) {
+	var a radius.Attribute
+	a, err = radius.NewString(value)
+	if err != nil {
+		return
+	}
+	return _Wimark_SetVendor(p, 8, a)
+}
+
+func WimarkWLANID_Del(p *radius.Packet) {
+	_Wimark_DelVendor(p, 8)
+}

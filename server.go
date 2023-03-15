@@ -45,3 +45,20 @@ func ServerRunAsync(cfg *RadiusServerConfig, h func(w radius.ResponseWriter, r *
 
 	return &server, nil
 }
+
+func ServerRunAsyncWithMultipleSecrets(
+	cfg *RadiusServerConfig,
+	s radius.SecretSource,
+	f func(w radius.ResponseWriter, r *radius.Request),
+) (*radius.PacketServer, error) {
+
+	server := radius.PacketServer{
+		Addr:         cfg.GetAddr(),
+		SecretSource: s,
+		Handler:      radius.HandlerFunc(f),
+	}
+
+	go server.ListenAndServe()
+
+	return &server, nil
+}

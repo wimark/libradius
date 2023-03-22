@@ -41,8 +41,6 @@ const (
 	WimarkIdentifierWLANType                 AVPType = 8
 	WimarkAuthCPEIDType                      AVPType = 9
 	WimarkAuthRadioType                      AVPType = 10
-	WimarkAuthBSSIDType                      AVPType = 11
-	WimarkAuthSSIDType                       AVPType = 12
 )
 
 const (

@@ -162,16 +162,16 @@ func AddVSAInt(p *radius.Packet, vendor uint32, attribute uint8, value int) {
 	p.Add(rfc2865.VendorSpecific_Type, vsa)
 }
 
-func CreateHexVSAByWlanID(value string) (hex []byte) {
+func CreateHexVSA(value string, t AVPType, vendor uint32) (hex []byte) {
 	if len(value) > 249 {
 		return
 	}
 	bytes := []byte(value)
 	attr := make([]byte, 2+len(bytes))
-	attr[0], attr[1] = byte(WimarkIdentifierWLANType), byte(len(attr))
+	attr[0], attr[1] = byte(t), byte(len(attr))
 	copy(attr[2:], bytes)
 	hex = make([]byte, 4+len(attr))
-	binary.BigEndian.PutUint32(hex, VendorWimark)
+	binary.BigEndian.PutUint32(hex, vendor)
 	copy(hex[4:], attr)
 	return
 }

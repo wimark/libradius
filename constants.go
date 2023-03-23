@@ -40,7 +40,6 @@ const (
 	WimarkRadiusExternalAuthUserLocationType AVPType = 7
 	WimarkIdentifierWLANType                 AVPType = 8
 	WimarkAuthCPEIDType                      AVPType = 9
-	WimarkAuthRadioType                      AVPType = 10
 )
 
 const (

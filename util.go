@@ -93,16 +93,16 @@ func DecodeAVPairsVSAByVendor(p *radius.Packet, vendorID uint32) ([]*AVP, error)
 	return AVPList, nil
 }
 
-func DecodeWimarkAVPairsStruct(p *radius.Packet) (*WimarkAVPs, error) {
-	var WimarkAVPStruct *WimarkAVPs
+func DecodeWimarkAVPairsStruct(p *radius.Packet) (WimarkAVPs, error) {
+	var WimarkAVPStruct WimarkAVPs
 	AVPList, err := DecodeAVPairsVSAByVendor(p, VendorWimark)
 
 	if err != nil {
-		return nil, err
+		return WimarkAVPStruct, err
 	}
 
 	if AVPList == nil {
-		return nil, fmt.Errorf("avps is empty")
+		return WimarkAVPStruct, fmt.Errorf("avps is empty")
 	}
 
 	for _, AVPItem := range AVPList {
@@ -114,16 +114,16 @@ func DecodeWimarkAVPairsStruct(p *radius.Packet) (*WimarkAVPs, error) {
 	return WimarkAVPStruct, nil
 }
 
-func DecodeCiscoAVPairsStruct(p *radius.Packet) (*CiscoAVPs, error) {
-	var CiscoAVPStruct *CiscoAVPs
+func DecodeCiscoAVPairsStruct(p *radius.Packet) (CiscoAVPs, error) {
+	var CiscoAVPStruct CiscoAVPs
 	AVPList, err := DecodeAVPairsVSAByVendor(p, VendorCisco)
 
 	if err != nil {
-		return nil, err
+		return CiscoAVPStruct, err
 	}
 
 	if AVPList == nil {
-		return nil, fmt.Errorf("avps is empty")
+		return CiscoAVPStruct, fmt.Errorf("avps is empty")
 	}
 
 	for _, AVPItem := range AVPList {

@@ -52,7 +52,6 @@ func DecodeAVPairsVSA(p *radius.Packet) ([]*AVP, error) {
 
 	for _, attr := range p.Attributes {
 		if attr.Type != rfc2865.VendorSpecific_Type {
-			AVPList = nil
 			continue
 		}
 

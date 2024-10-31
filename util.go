@@ -68,20 +68,14 @@ func DecodeAVPairsVSA(p *radius.Packet) ([]*AVP, error) {
 }
 
 func DecodeAVPairsVSAByVendor(p *radius.Packet, vendorID uint32) ([]*AVP, error) {
-	var AVPItem *AVP
 	var AVPList []*AVP
-	var err error
 
 	for _, attr := range p.Attributes {
-		if attr.Type != rfc2865.VendorSpecific_Type {
-			continue
-		}
-
-		AVPItem, err = DecodeAVPairVSA(radius.Bytes(attr.Attribute))
-		if err != nil {
-			AVPList = nil
-			return nil, err
-		} else {
+		if attr.Type == rfc2865.VendorSpecific_Type {
+			AVPItem, err := DecodeAVPairVSA(radius.Bytes(attr.Attribute))
+			if err != nil {
+				return nil, err
+			}
 			if AVPItem.VendorId == vendorID {
 				AVPList = append(AVPList, AVPItem)
 			}

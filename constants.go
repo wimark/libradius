@@ -5,10 +5,11 @@ import "time"
 type AVPType uint8
 
 const (
-	VendorCisco  uint32 = 9
-	VendorWimark uint32 = 52400
-	VendorAlu    uint32 = 6527
-	VendorRdp    uint32 = 250
+	VendorCisco    uint32 = 9
+	VendorWimark   uint32 = 52400
+	VendorAirspace uint32 = 14179
+	VendorAlu      uint32 = 6527
+	VendorRdp      uint32 = 250
 )
 
 const (
@@ -46,6 +47,10 @@ const (
 	CiscoAVPTypeDefault     AVPType = 1
 	CiscoAVPTypeAccountInfo AVPType = 250
 	CiscoAVPTypeCommandCode AVPType = 252
+)
+
+const (
+	AirspaceAVPTypeACLName AVPType = 6
 )
 
 const (

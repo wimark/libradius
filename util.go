@@ -20,6 +20,10 @@ type WimarkAVPs struct {
 	SessionInt int
 }
 
+type AirspaceAVPs struct {
+	ACLName string
+}
+
 type CiscoAVPs struct {
 	AccountInfo      string
 	CommandCodeStr   string
@@ -104,6 +108,27 @@ func DecodeWimarkAVPairsStruct(p *radius.Packet) (WimarkAVPs, error) {
 	}
 
 	return WimarkAVPStruct, nil
+}
+
+func DecodeAirspaceAVPairsStruct(p *radius.Packet) (AirspaceAVPs, error) {
+	var AirspaceAVPStruct AirspaceAVPs
+	AVPList, err := DecodeAVPairsVSAByVendor(p, VendorAirspace)
+
+	if err != nil {
+		return AirspaceAVPStruct, err
+	}
+
+	if AVPList == nil {
+		return AirspaceAVPStruct, fmt.Errorf("avps is empty")
+	}
+
+	for _, AVPItem := range AVPList {
+		if AVPItem.TypeId == uint8(AirspaceAVPTypeACLName) {
+			AirspaceAVPStruct.ACLName = string(AVPItem.Value)
+		}
+	}
+
+	return AirspaceAVPStruct, nil
 }
 
 func DecodeCiscoAVPairsStruct(p *radius.Packet) (CiscoAVPs, error) {

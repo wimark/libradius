@@ -34,13 +34,14 @@ const (
 )
 
 const (
-	WimarkAVPTypeClientStr                   AVPType = 3
-	WimarkAVPTypeSessionInt                  AVPType = 4
-	WimarkAVPTypeAlwaysRedirect              AVPType = 5
-	WimarkRadiusExternalAuthUserRoleType     AVPType = 6
-	WimarkRadiusExternalAuthUserLocationType AVPType = 7
-	WimarkIdentifierWLANType                 AVPType = 8
-	WimarkAuthCPEIDType                      AVPType = 9
+	WimarkAVPTypeClientStr                       AVPType = 3
+	WimarkAVPTypeSessionInt                      AVPType = 4
+	WimarkAVPTypeAlwaysRedirect                  AVPType = 5
+	WimarkRadiusExternalAuthUserRoleType         AVPType = 6
+	WimarkRadiusExternalAuthUserLocationType     AVPType = 7
+	WimarkIdentifierWLANType                     AVPType = 8
+	WimarkAuthCPEIDType                          AVPType = 9
+	WimarkRadiusExternalAuthUserLocationNameType AVPType = 10
 )
 
 const (

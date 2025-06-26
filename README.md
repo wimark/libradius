@@ -1,8 +1,6 @@
 # libradius
 
-Library with RADIUS client / server fast deploy and Wimark AVPs parsing.
-Using in [Wimark wBRAS](https://docs.wimark.com/#/bras/README).
-
+Library with RADIUS client / server and Wimark AVPs parsing.
 
 ## copyright
 

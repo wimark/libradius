@@ -49,7 +49,7 @@ func SendCoA(addr, secret string, request CoaRequest) error {
 	}
 
 	if response != nil && response.Code != radius.CodeCoAACK {
-		return fmt.Errorf("response is not CodeCoAACK: %d", response.Code)
+		return fmt.Errorf("unexpected CoA response: %s (%d)", response.Code, response.Code)
 	}
 
 	return nil

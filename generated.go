@@ -100,7 +100,7 @@ func _Wimark_SetVendor(p *radius.Packet, typ byte, attr radius.Attribute) (err e
 			copy(avp.Attribute[4:], vsa)
 			i++
 		} else {
-			p.Attributes = append(p.Attributes[:i], p.Attributes[i+i:]...)
+			p.Attributes = append(p.Attributes[:i], p.Attributes[i+1:]...)
 		}
 	}
 	return _Wimark_AddVendor(p, typ, attr)

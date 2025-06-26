@@ -8,8 +8,9 @@ import (
 )
 
 type RadiusUserData struct {
-	UserRole     string
-	UserLocation string
+	UserRole         string
+	UserLocation     string
+	UserLocationName string
 }
 
 func LookupExternalRadiusAuthAttrs(p *radius.Packet) (*RadiusUserData, error) {
@@ -43,6 +44,10 @@ func LookupExternalRadiusAuthAttrs(p *radius.Packet) (*RadiusUserData, error) {
 					data.UserLocation = radius.String(vsa[2:int(vsaLen)])
 				}
 
+				if vsaType == byte(WimarkRadiusExternalAuthUserLocationNameType) {
+					data.UserLocationName = radius.String(vsa[2:int(vsaLen)])
+				}
+
 				vsa = vsa[int(vsaLen):]
 			}
 		}
@@ -53,8 +58,8 @@ func LookupExternalRadiusAuthAttrs(p *radius.Packet) (*RadiusUserData, error) {
 		return nil, err
 	}
 
-	if len(data.UserLocation) == 0 {
-		err := fmt.Errorf("attribute UserLocation not found")
+	if len(data.UserLocation) == 0 || len(data.UserLocationName) == 0 {
+		err := fmt.Errorf("attribute UserLocation or UserLocationName not found")
 		return nil, err
 	}
 

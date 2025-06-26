@@ -2,11 +2,14 @@ VENDOR		Wimark			52400
 
 BEGIN-VENDOR	Wimark
 
-ATTRIBUTE	Wimark-Client-Group             3   string
-ATTRIBUTE	Wimark-Session-Timeout			4	integer
-ATTRIBUTE	Wimark-Always-Redirect			5	integer
-ATTRIBUTE	Wimark-WLAN-ID			        8	string
-ATTRIBUTE	Wimark-CPE-ID			        9	string
+ATTRIBUTE	Wimark-Client-Group                       3	string
+ATTRIBUTE	Wimark-Session-Timeout			        4	integer
+ATTRIBUTE	Wimark-Always-Redirect			        5	integer
+ATTRIBUTE	Wimark-Radius-External-Auth-User-Role		6	string
+ATTRIBUTE	Wimark-Radius-External-Auth-User-Location	7	string
+ATTRIBUTE	Wimark-WLAN-ID			                8	string
+ATTRIBUTE	Wimark-CPE-ID			                9	string
+ATTRIBUTE	Wimark-Radius-External-Auth-User-Location-Name	10	string
 
 
 END-VENDOR	Wimark

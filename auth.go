@@ -58,7 +58,7 @@ func LookupExternalRadiusAuthAttrs(p *radius.Packet) (*RadiusUserData, error) {
 		return nil, err
 	}
 
-	if len(data.UserLocation) == 0 || len(data.UserLocationName) == 0 {
+	if len(data.UserLocation) == 0 && len(data.UserLocationName) == 0 {
 		err := fmt.Errorf("attribute UserLocation or UserLocationName not found")
 		return nil, err
 	}
